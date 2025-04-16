@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Grand.Domain.Shipping;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Shipping.DHL.Common;
+using Shipping.DHL.Models;
 using Shipping.DHL.Services;
 
 namespace Shipping.DHL.Controllers
@@ -22,12 +24,12 @@ namespace Shipping.DHL.Controllers
         }
 
 
-        [HttpPost("create-shipments")]
-        public async Task<IActionResult> CreateShipments()
+        [HttpPost("create-dhl-shipments")]
+        public async Task<IActionResult> CreateShipments([FromBody] Shipment[] shipments)
         {
             try
             {
-                var request = _shipmentService.CreateShipmentsRequest();
+                var request = _shipmentService.CreateShipmentsRequest(shipments);
 
                 var response = await _client.createShipmentsAsync(request.authData, request.shipments);
 
@@ -39,20 +41,47 @@ namespace Shipping.DHL.Controllers
             }
         }
 
-        [HttpPost("create-shipment")]
-        public async Task<IActionResult> CreateShipment()
+        [HttpPost("book-dhl-courier")]
+        public async Task<IActionResult> BookCourier([FromBody] DhlCourierPickupRequest request)
         {
             try
             {
-                var request = _shipmentService.CreateShipmentsRequest();
+                var authorization = _shipmentService.ProvideAuthorization();
 
-                var response = await _client.createShipmentsAsync(request.authData, request.shipments);
+                var response = await _client.bookCourierAsync(
+                    authorization, 
+                    request.PickupDate, 
+                    request.PickupTimeFrom, 
+                    request.PickupTimeTo, 
+                    request.AdditionalInfo, 
+                    request.ShipmentIdList, 
+                    request.ShipmentOrderInfo, 
+                    request.CourierWithLabel);
 
-                return Ok(response.createShipmentsResult);
+                return Ok(response.bookCourierResult);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error sending shipment: {ex.Message}");
+                return StatusCode(500, $"Error booking courier: {ex.Message}");
+            }
+        }
+
+        [HttpPost("get-dhl-labels")]
+        public async Task<IActionResult> GetLabels([FromBody] ItemToPrint[] request)
+        {
+            try
+            {
+                var authorization = _shipmentService.ProvideAuthorization();
+
+                var response = await _client.getLabelsAsync(
+                    authorization,
+                   request);
+
+                return Ok(response.getLabelsResult);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error getting labels: {ex.Message}");
             }
         }
 
