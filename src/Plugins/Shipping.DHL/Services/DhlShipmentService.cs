@@ -1,14 +1,15 @@
 ﻿using Grand.Domain.Shipping;
 using Microsoft.Extensions.Options;
 using Shipping.DHL.Common;
+using Shipping.DHL.Interfaces;
 
 namespace Shipping.DHL.Services
 {
-    public class ShipmentService
+    public class DhlShipmentService : IDhlShipmentService
     {
         private readonly AuthData _authData;
 
-        public ShipmentService(IOptions<DhlAuth> authOptions)
+        public DhlShipmentService(IOptions<DhlAuth> authOptions)
         {
             _authData = new AuthData {
                 username = authOptions.Value.UsernameField,
