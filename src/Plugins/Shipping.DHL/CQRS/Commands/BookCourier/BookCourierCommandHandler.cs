@@ -22,7 +22,7 @@ namespace Shipping.DHL.CQRS.Commands.BookCourier
         {
 
 
-            bookCourierRequest bookingRequest = new bookCourierRequest {
+            var bookingRequest = new bookCourierRequest {
                 authData = _dhlDeliveryService.ProvideCredentials(),
                 pickupDate = command.PickupDate,
                 pickupTimeFrom = command.PickupTimeFrom,
@@ -32,12 +32,12 @@ namespace Shipping.DHL.CQRS.Commands.BookCourier
                 courierWithLabel = command.CourierWithLabel
             };
 
-            bookCourierResponse bookingResponse = await _dhlDeliveryService.bookCourierAsync(bookingRequest);
+            var bookingResponse = await _dhlDeliveryService.bookCourierAsync(bookingRequest);
 
 
             if (string.IsNullOrEmpty(bookingResponse.bookCourierResult[0]))
             {
-                throw new Exception($"BookCourier ! No courier order ID returned for DHL Delivery: {command.ShipmentsIdList[0].ToString()}.");
+                throw new Exception($"Failed to order a courier pickup for DHL Delivery: {command.ShipmentsIdList[0].ToString()}.");
             }
 
 

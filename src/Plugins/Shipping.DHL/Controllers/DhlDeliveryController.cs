@@ -17,6 +17,10 @@ using Grand.Business.Core.Interfaces.Common.Pdf;
 using Grand.Infrastructure;
 using Shipping.DHL.Controllers.Models;
 using Grand.Business.Core.Interfaces.Checkout.Orders;
+using Grand.Data;
+using Shipping.DHL.Database.DbModels;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
+using MongoDB.Driver.Linq;
 
 namespace Shipping.DHL.Controllers
 {
@@ -29,14 +33,16 @@ namespace Shipping.DHL.Controllers
         private readonly IGroupService _groupService;
         private readonly IShipmentService _shipmentService;
         private readonly IOrderService _orderService;
+        private readonly IRepository<DhlShipmentsDelivery> _dhlDeliveryRepository;
 
-        public DhlDeliveryController(IMediator mediator, IContextAccessor contextAccessor, IGroupService groupService, IShipmentService shipmentService, IOrderService orderService)
+        public DhlDeliveryController(IMediator mediator, IContextAccessor contextAccessor, IGroupService groupService, IShipmentService shipmentService, IOrderService orderService, IRepository<DhlShipmentsDelivery> dhlDeliveryRepository)
         {
             _mediator = mediator;
             _contextAccessor = contextAccessor;
             _groupService = groupService;
             _shipmentService = shipmentService;
             _orderService = orderService;
+            _dhlDeliveryRepository = dhlDeliveryRepository;
         }
 
         [HttpPost]
@@ -74,10 +80,19 @@ namespace Shipping.DHL.Controllers
                         order.ShippingStatusId = ShippingStatus.AwaitingCourier;
                         await _orderService.UpdateOrder(order);
 
-                        //Czy tworzymy baze per delivery provider z trackingiem paczki i wszystkimi provider-related detalami 
+                        
                         string bookCourierOrderId = bookCourierResult;
                         string dhlInternalShipmentId = shipment.ExternalDeliveryShipmentId;
-                        //Update DHL DB with AWAITINGCOURIERSTATUS + PICKUPDELIVERYORDERID / FK - ExternalDeliveryShipmentId
+
+                        //get externaldeliveryprovider shipmentid (from provider's db set)
+                        var dhlDeliveryShipment = await _dhlDeliveryRepository.Table.Where(
+                            column =>column.DhlShipmentId.ToLower().Contains(shipment.ExternalDeliveryShipmentId))
+                            .FirstAsync();
+
+                        //update externalprovider with bookCourierId 
+                        dhlDeliveryShipment.PickupOrderId = bookCourierOrderId;
+
+                        await _dhlDeliveryRepository.UpdateAsync(dhlDeliveryShipment);
                     }
                     catch (Exception ex)
                     {

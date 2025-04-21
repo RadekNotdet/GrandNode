@@ -160,13 +160,12 @@ public class ShipmentController : BaseAdminController
     [ArgumentNameFilter(KeyName = "save-continue", Argument = "continueEditing")]
     public async Task<IActionResult> AddShipment(AddShipmentModel model, bool continueEditing)
     {
-        //Pierwszy add shipment robiony dla orderu 
-        //JEŻELI SHIPMENT JEST DHL -> dhl.createShipmentAsync -> dodać dhlshipmentId do Shipment modelu
-
         var order = await _orderService.GetOrderById(model.OrderId);
         if (order == null)
             //No order found with the specified id
             return RedirectToAction("List");
+
+        
 
         if (await _groupService.IsStaff(_contextAccessor.WorkContext.CurrentCustomer) &&
             order.StoreId != _contextAccessor.WorkContext.CurrentCustomer.StaffStoreId)
@@ -191,7 +190,12 @@ public class ShipmentController : BaseAdminController
         if (shipment.ShipmentItems.Count > 0)
         {
             shipment.TotalWeight = sh.totalWeight;
+
+            //IF DHL - CREATESHIPMENT + ASSIGN EXTERNALDELIVERYID TO SHIPMENT
+
             await _shipmentService.InsertShipment(shipment);
+
+
 
             //add a note
             await _orderService.InsertOrderNote(new OrderNote {

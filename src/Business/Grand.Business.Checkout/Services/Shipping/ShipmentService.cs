@@ -129,6 +129,12 @@ public class ShipmentService : IShipmentService
     {
         ArgumentNullException.ThrowIfNull(shipment);
         var shipmentExists = _shipmentRepository.Table.FirstOrDefault();
+        if(shipment.HasExternalDeliveryShipment)
+        {
+            //call external delivery service: create shipment ( returns ExternalDeliveryShipmentId )
+            //add ExternalDeliveryShipmentId to shipment
+            //_externalDeliveryRepository.InsertAsync(ExternalDeliveryShipmentId, bookCourierId?) //InsertAsync(dhl-id, ...);
+        }
         shipment.ShipmentNumber = shipmentExists != null ? _shipmentRepository.Table.Max(x => x.ShipmentNumber) + 1 : 1;
         await _shipmentRepository.InsertAsync(shipment);
 
