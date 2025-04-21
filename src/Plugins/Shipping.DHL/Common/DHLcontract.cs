@@ -7073,7 +7073,7 @@ public partial class PreavisoContact
 [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "8.0.0")]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.Xml.Serialization.XmlTypeAttribute(Namespace="https://sandbox.dhl24.com.pl/webapi2/provider/service.html?ws=1")]
-public partial class Address
+public partial class AddressDhl
 {
     
     private string nameField;
@@ -7184,7 +7184,7 @@ public partial class Addressat
     
     private PreavisoContact contactField;
     
-    private Address addressField;
+    private AddressDhl addressField;
     
     /// <remarks/>
     [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=true)]
@@ -7216,7 +7216,7 @@ public partial class Addressat
     
     /// <remarks/>
     [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=true)]
-    public Address address
+    public AddressDhl address
     {
         get
         {

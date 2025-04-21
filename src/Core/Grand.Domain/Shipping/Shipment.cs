@@ -64,4 +64,6 @@ public class Shipment : BaseEntity
         get => _shipmentItems ??= new List<ShipmentItem>();
         protected set => _shipmentItems = value;
     }
+    public bool HasExternalDeliveryShipment { get; set; } = false;
+    public virtual string ExternalDeliveryShipmentId { get; set; }
 }

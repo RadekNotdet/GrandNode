@@ -27,7 +27,10 @@
                             <button class="btn btn-success" type="submit" id="ship-selected">
                                 <i class="fa fa-check"></i> @Loc["Admin.Orders.Shipments.ShipSelected"]
                             </button>
-                            <button class="btn btn-success" type="submit" id="deliver-selected">
+                            <button class="btn btn-success" type="submit" id="dhl-courier-ordered">
+                                <i class="fa fa-check"></i> @Loc["Admin.Orders.Shipments.BookCourierSelected"]
+                            </button>
+                            <button class="btn btn-success" type="submit" id="book-courier-selected">
                                 <i class="fa fa-check-circle"></i> @Loc["Admin.Orders.Shipments.DeliverySelected"]
                             </button>
                             <vc:admin-widget widget-zone="order_shipment_list_buttons" additional-data="null"/>
@@ -301,32 +304,6 @@
                 return false;
             });
 
-            $('#deliver-selected').click(function(e) {
-                e.preventDefault();
-
-                var postData = {
-                    selectedIds: selectedIds
-                };
-                addAntiForgeryToken(postData);
-
-                $.ajax({
-                    cache: false,
-                    type: "POST",
-                    url: "@(Url.Action("SetAsDeliveredSelected", "Shipment", new { area = Constants.AreaAdmin }))",
-                    data: postData,
-                    complete: function(data) {
-                        var grid = $('#shipments-grid').data('kendoGrid');
-                        grid.dataSource.read();
-                    },
-                    error: function(xhr, ajaxOptions, thrownError) {
-                        alert(thrownError);
-                    },
-                    traditional: true
-                });
-                return false;
-            });
-
-
             $('#mastercheckbox').click(function () {
                 $('.checkboxGroups').prop('checked', $(this).is(':checked')).change();
             });
@@ -348,6 +325,31 @@
                     }
                 }
                 updateMasterCheckbox();
+            });
+
+               $('#dhl-courier-ordered').click(function(e) {
+                e.preventDefault();
+
+                var postData = {
+                    selectedIds: selectedIds
+                };
+                addAntiForgeryToken(postData);
+
+                $.ajax({
+                    cache: false,
+                    type: "POST",
+                    url: "@(Url.Action("BookCourier", "DhlDelivery", new { area = Constants.AreaAdmin }))",
+                    data: postData,
+                    complete: function(data) {
+                        var grid = $('#shipments-grid').data('kendoGrid');
+                        grid.dataSource.read();
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        alert(thrownError);
+                    },
+                    traditional: true
+                });
+                return false;
             });
         });
 

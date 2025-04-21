@@ -796,6 +796,84 @@ public class CheckoutController : BasePublicController
         }
     }
 
+    [HttpPost]
+    public virtual async Task<IActionResult> E(CheckoutShippingMethodModel model)
+    {
+        try
+        {
+            //validation
+            var customer = _contextAccessor.WorkContext.CurrentCustomer;
+            var store = _contextAccessor.StoreContext.CurrentStore;
+
+            var cart = await _shoppingCartService.GetShoppingCart(_contextAccessor.StoreContext.CurrentStore.Id,
+                ShoppingCartType.ShoppingCart, ShoppingCartType.Auctions);
+            await CartValidate(cart);
+
+            if (!cart.RequiresShipping())
+                throw new Exception("Shipping is not required");
+
+            //parse selected method 
+            //model.TryGetValue("shipping option", out var shipping);
+            if (string.IsNullOrEmpty(model.ShippingOption))
+                throw new Exception("Selected shipping method can't be parsed");
+
+            var splitOption = model.ShippingOption.Split([":"], StringSplitOptions.RemoveEmptyEntries);
+            if (splitOption.Length != 2)
+                throw new Exception("Selected shipping method can't be parsed");
+
+            var selectedName = splitOption[0];
+            var shippingRateProviderSystemName = splitOption[1];
+
+            //clear shipping option XML/Description
+            await _customerService.UpdateUserField(customer, SystemCustomerFieldNames.ShippingOptionAttribute, "",
+                store.Id);
+            await _customerService.UpdateUserField(customer, SystemCustomerFieldNames.ShippingOptionAttributeDescription,
+                "", store.Id);
+
+            //validate customer's input
+            var warnings = (await ValidateShippingForm(model)).ToList();
+
+            //find it
+            //performance optimization. try cache first
+            var shippingOptions = customer.GetUserFieldFromEntity<List<ShippingOption>>(SystemCustomerFieldNames.OfferedShippingOptions, store.Id);
+            if (shippingOptions == null || shippingOptions.Count == 0)
+                //not found? load them using shipping service
+                shippingOptions = (await _shippingService
+                        .GetShippingOptions(customer, cart, customer.ShippingAddress,
+                            shippingRateProviderSystemName, store))
+                    .ShippingOptions
+                    .ToList();
+            else
+                //loaded cached results. filter result by a chosen Shipping rate  method
+                shippingOptions = shippingOptions.Where(so =>
+                        so.ShippingRateProviderSystemName.Equals(shippingRateProviderSystemName,
+                            StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            var shippingOption = shippingOptions
+                .FirstOrDefault(so => !string.IsNullOrEmpty(so.Name) &&
+                            so.Name.Equals(selectedName, StringComparison.OrdinalIgnoreCase));
+            if (shippingOption == null)
+                throw new Exception("Selected shipping method can't be loaded");
+
+            //save
+            await _customerService.UpdateUserField(customer, SystemCustomerFieldNames.SelectedShippingOption,
+                shippingOption, store.Id);
+
+            if (!warnings.Any())
+                //load next step
+                return await LoadStepAfterShippingMethod(cart);
+
+            var message = string.Join(", ", warnings.ToArray());
+            return Json(new { error = 1, message });
+        }
+        catch (Exception exc)
+        {
+            _logger.LogWarning(exc.Message);
+            return Json(new { error = 1, message = exc.Message });
+        }
+    }
+
     #region Fields
 
     private readonly IContextAccessor _contextAccessor;
