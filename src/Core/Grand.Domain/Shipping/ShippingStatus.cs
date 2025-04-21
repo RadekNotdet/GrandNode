@@ -38,5 +38,10 @@ public enum ShippingStatus
     /// <summary>
     ///     Awaits for courier pick up
     /// </summary>
-    AwaitingCourier = 41
+    AwaitingCourier = 41,
+
+    /// <summary>
+    ///     Shipment returned/in return.
+    /// </summary>
+    Returned = 42
 }

@@ -30,7 +30,7 @@
                             <button class="btn btn-success" type="submit" id="dhl-courier-ordered">
                                 <i class="fa fa-check"></i> @Loc["Admin.Orders.Shipments.BookCourierSelected"]
                             </button>
-                            <button class="btn btn-success" type="submit" id="book-courier-selected">
+                            <button class="btn btn-success" type="submit" id="deliver-selected">
                                 <i class="fa fa-check-circle"></i> @Loc["Admin.Orders.Shipments.DeliverySelected"]
                             </button>
                             <vc:admin-widget widget-zone="order_shipment_list_buttons" additional-data="null"/>
@@ -291,6 +291,31 @@
                     cache: false,
                     type: "POST",
                     url: "@(Url.Action("SetAsShippedSelected", "Shipment", new { area = Constants.AreaAdmin }))",
+                    data: postData,
+                    complete: function(data) {
+                        var grid = $('#shipments-grid').data('kendoGrid');
+                        grid.dataSource.read();
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        alert(thrownError);
+                    },
+                    traditional: true
+                });
+                return false;
+            });
+
+             $('#deliver-selected').click(function(e) {
+                e.preventDefault();
+
+                var postData = {
+                    selectedIds: selectedIds
+                };
+                addAntiForgeryToken(postData);
+
+                $.ajax({
+                    cache: false,
+                    type: "POST",
+                    url: "@(Url.Action("SetAsDeliveredSelected", "Shipment", new { area = Constants.AreaAdmin }))",
                     data: postData,
                     complete: function(data) {
                         var grid = $('#shipments-grid').data('kendoGrid');

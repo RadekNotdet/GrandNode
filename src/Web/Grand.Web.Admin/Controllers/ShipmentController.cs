@@ -612,33 +612,6 @@ public class ShipmentController : BaseAdminController
 
         return Json(new { Result = true });
     }
-
-    [PermissionAuthorizeAction(PermissionActionName.Edit)]
-    [HttpPost]
-    public async Task<IActionResult> OrderDhlDelivery(ICollection<string> selectedIds)
-    {
-        var shipments = new List<Shipment>();
-        var shipments_access = new List<Shipment>();
-        if (selectedIds != null) shipments.AddRange(await _shipmentService.GetShipmentsByIds(selectedIds.ToArray()));
-
-        var storeId = "";
-        if (await _groupService.IsStaff(_contextAccessor.WorkContext.CurrentCustomer))
-            storeId = _contextAccessor.WorkContext.CurrentCustomer.StaffStoreId;
-
-        shipments_access = shipments.Where(x => x.StoreId == storeId || string.IsNullOrEmpty(storeId)).ToList();
-        foreach (var shipment in shipments_access)
-            try
-            {
-                await _mediator.Send(new ShipCommand { Shipment = shipment, NotifyCustomer = true });
-            }
-            catch
-            {
-                //ignore any exception
-            }
-
-        return Json(new { Result = true });
-    }
-
     #region Shipment notes
 
     [PermissionAuthorizeAction(PermissionActionName.Preview)]

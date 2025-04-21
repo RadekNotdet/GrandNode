@@ -15,6 +15,8 @@ using Grand.Business.Core.Interfaces.Checkout.Shipping;
 using Grand.Business.Core.Interfaces.Common.Directory;
 using Grand.Business.Core.Interfaces.Common.Pdf;
 using Grand.Infrastructure;
+using Shipping.DHL.Controllers.Models;
+using Grand.Business.Core.Interfaces.Checkout.Orders;
 
 namespace Shipping.DHL.Controllers
 {
@@ -26,21 +28,23 @@ namespace Shipping.DHL.Controllers
         private readonly IContextAccessor _contextAccessor;
         private readonly IGroupService _groupService;
         private readonly IShipmentService _shipmentService;
+        private readonly IOrderService _orderService;
 
-        public DhlDeliveryController(IMediator mediator, IContextAccessor contextAccessor, IGroupService groupService, IShipmentService shipmentService)
+        public DhlDeliveryController(IMediator mediator, IContextAccessor contextAccessor, IGroupService groupService, IShipmentService shipmentService, IOrderService orderService)
         {
             _mediator = mediator;
             _contextAccessor = contextAccessor;
             _groupService = groupService;
             _shipmentService = shipmentService;
+            _orderService = orderService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> BookCourier(ICollection<string> selectedIds)
+        public async Task<IActionResult> BookCourier(BookCourierModel model)
         {
             var shipments = new List<Shipment>();
             var shipments_access = new List<Shipment>();
-            if (selectedIds != null) shipments.AddRange(await _shipmentService.GetShipmentsByIds(selectedIds.ToArray()));
+            if (model.selectedIds != null) shipments.AddRange(await _shipmentService.GetShipmentsByIds(model.selectedIds.ToArray()));
 
             var storeId = "";
             if (await _groupService.IsStaff(_contextAccessor.WorkContext.CurrentCustomer))
@@ -50,26 +54,36 @@ namespace Shipping.DHL.Controllers
 
             foreach (var shipment in shipments_access)
             {
-                try
-                {
-                    var bookCourierResult = await _mediator.Send(new BookCourierCommand {
-                        PickupDate = "BookCourierForm.PickupDate",
-                        PickupTimeFrom = "BookCourierForm.PickupTimeFrom",
-                        PickupTimeTo = "BookCourierForm.PickupTimeTo",
-                        AdditionalInfo = "BookCourierForm.Additionalinfo",
-                        CourierWithLabel = true,
-                        ShipmentsIdList = new[] { shipment.ExternalDeliveryShipmentId } });
+                var order = await _orderService.GetOrderById(shipment.OrderId);
 
-                    string bookCourierOrderId = bookCourierResult;
-                    string dhlInternalShipmentId = shipment.ExternalDeliveryShipmentId;
-                    //Update DHL DB with AWAITINGCOURIERSTATUS + PICKUPDELIVERYORDERID / FK - ExternalDeliveryShipmentId
-                }
-                catch (Exception ex)
+                if (order.ShippingMethod.ToUpper().Contains("DHL") 
+                    && order.ShippingStatusId==ShippingStatus.Pending)
                 {
-                    return StatusCode(500, $"DHL API Error: {ex.Message}");
-                }
-               
-                
+                    try
+                    {
+                        var bookCourierResult = await _mediator.Send(new BookCourierCommand {
+                            PickupDate = model.PickupDate,
+                            PickupTimeFrom = model.PickupTimeFrom,
+                            PickupTimeTo = model.PickupTimeTo,
+                            AdditionalInfo = model.Additionalinfo,
+                            CourierWithLabel = true,
+                            ShipmentsIdList = new[] { shipment.ExternalDeliveryShipmentId }
+                        });
+
+
+                        order.ShippingStatusId = ShippingStatus.AwaitingCourier;
+                        await _orderService.UpdateOrder(order);
+
+                        //Czy tworzymy baze per delivery provider z trackingiem paczki i wszystkimi provider-related detalami 
+                        string bookCourierOrderId = bookCourierResult;
+                        string dhlInternalShipmentId = shipment.ExternalDeliveryShipmentId;
+                        //Update DHL DB with AWAITINGCOURIERSTATUS + PICKUPDELIVERYORDERID / FK - ExternalDeliveryShipmentId
+                    }
+                    catch (Exception ex)
+                    {
+                        return StatusCode(500, $"DHL API Error: {ex.Message}");
+                    }
+                } 
             }
             return Ok();
         }
@@ -80,9 +94,33 @@ namespace Shipping.DHL.Controllers
           throw new NotImplementedException();
         }
 
+        [HttpPost("create-dhl-shipments")]
+        public async Task<IActionResult> GetDeliveries(string createdFrom, string createdTo)
+        {
+            throw new NotImplementedException();
+        }
+
+        [HttpDelete("delete-dhl-shipments")]
+        public async Task<IActionResult> DeleteDelivery(ICollection<string> dhlShpimentsIds)
+        {
+            throw new NotImplementedException();
+        }
+
+        [HttpGet("get-postal-code-services")]
+        public async Task<IActionResult> GetPostalCodeServices(string postCode, string pickupDate)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [HttpPost("get-dhl-price")]
+        public Task<IActionResult> GetDeliveryPrice(object TODO)
+        {
+            throw new NotImplementedException();
+        }
 
         [HttpPost("get-dhl-labels")]
-        public async Task<IActionResult> GetLabels([FromBody] ItemToPrint[] labelsToPrint)
+        public async Task<IActionResult> GetLabelsForDelivery([FromBody] ItemToPrint[] labelsToPrint)
         {
           throw new NotImplementedException();
         }
@@ -95,11 +133,6 @@ namespace Shipping.DHL.Controllers
             throw new NotImplementedException();
         }
 
-        [HttpPost("get-dhl-price")]
-        public Task<IActionResult> GetDeliveryPrice([FromBody] string dhlShipmentId)
-        {
-            throw new NotImplementedException();
-        }
 
 
 

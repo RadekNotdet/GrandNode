@@ -21,28 +21,28 @@ namespace Shipping.DHL.CQRS.Commands.BookCourier
         public async Task<string> Handle(BookCourierCommand command, CancellationToken cancellationToken)
         {
 
-            try
+
+            bookCourierRequest bookingRequest = new bookCourierRequest {
+                authData = _dhlDeliveryService.ProvideCredentials(),
+                pickupDate = command.PickupDate,
+                pickupTimeFrom = command.PickupTimeFrom,
+                pickupTimeTo = command.PickupTimeTo,
+                shipmentIdList = command.ShipmentsIdList,
+                additionalInfo = command.AdditionalInfo,
+                courierWithLabel = command.CourierWithLabel
+            };
+
+            bookCourierResponse bookingResponse = await _dhlDeliveryService.bookCourierAsync(bookingRequest);
+
+
+            if (string.IsNullOrEmpty(bookingResponse.bookCourierResult[0]))
             {
-                bookCourierRequest bookingRequest = new bookCourierRequest {
-                    authData = _dhlDeliveryService.ProvideCredentials(),
-                    pickupDate = command.PickupDate,
-                    pickupTimeFrom = command.PickupTimeFrom,
-                    pickupTimeTo = command.PickupTimeTo,
-                    shipmentIdList = command.ShipmentsIdList,
-                    additionalInfo = command.AdditionalInfo,
-                    courierWithLabel = command.CourierWithLabel
-                };
-
-                bookCourierResponse bookingResult = await _dhlDeliveryService.bookCourierAsync(bookingRequest);
-
-                if (bookingResult?.bookCourierResult == null || !bookingResult.bookCourierResult.Any())
-                {
-                    throw new Exception($"BookCourier ! No courier order ID returned for DHL Delivery: {command.ShipmentsIdList[0].ToString()}.");
-                }
+                throw new Exception($"BookCourier ! No courier order ID returned for DHL Delivery: {command.ShipmentsIdList[0].ToString()}.");
+            }
 
 
-            return bookingResult.bookCourierResult[0];
-
+            return bookingResponse.bookCourierResult[0];
         }
     }
 }
+
