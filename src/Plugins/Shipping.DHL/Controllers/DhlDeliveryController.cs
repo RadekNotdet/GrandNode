@@ -18,7 +18,6 @@ using Grand.Infrastructure;
 using Shipping.DHL.Controllers.Models;
 using Grand.Business.Core.Interfaces.Checkout.Orders;
 using Grand.Data;
-using Shipping.DHL.Database.DbModels;
 using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 using MongoDB.Driver.Linq;
 
@@ -33,17 +32,15 @@ namespace Shipping.DHL.Controllers
         private readonly IGroupService _groupService;
         private readonly IShipmentService _shipmentService;
         private readonly IOrderService _orderService;
-        private readonly IRepository<DhlShipmentsDelivery> _dhlDeliveryRepository;
 
         public DhlDeliveryController(IMediator mediator, IContextAccessor
-            contextAccessor, IGroupService groupService, IShipmentService shipmentService, IOrderService orderService, IRepository<DhlShipmentsDelivery> dhlDeliveryRepository)
+            contextAccessor, IGroupService groupService, IShipmentService shipmentService, IOrderService orderService)
         {
             _mediator = mediator;
             _contextAccessor = contextAccessor;
             _groupService = groupService;
             _shipmentService = shipmentService;
             _orderService = orderService;
-            _dhlDeliveryRepository = dhlDeliveryRepository;
         }
 
         [HttpPost]
@@ -85,13 +82,7 @@ namespace Shipping.DHL.Controllers
                         
                         string bookCourierOrderId = bookCourierResult;
                         string dhlInternalShipmentId = shipment.ExternalDeliveryShipmentId;
-
-                        //get externaldeliveryprovider shipmentid (from provider's db set)
-                        var dhlDeliveryEntity = await _dhlDeliveryRepository.Table
-                            .Where(column =>column.DhlShipmentId.ToUpper().Contains(shipment.ExternalDeliveryShipmentId.ToUpper()))
-                            .FirstAsync();
-                        dhlDeliveryEntity.PickupOrderId = bookCourierOrderId;
-                        await _dhlDeliveryRepository.UpdateAsync(dhlDeliveryEntity);
+                        //UPDATE EXTERNALDELIVERYSHIPMENTS DBSET
                     }
                     catch (Exception ex)
                     {
