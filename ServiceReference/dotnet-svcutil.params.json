@@ -1,0 +1,12 @@
+{
+  "providerId": "Microsoft.Tools.ServiceModel.Svcutil",
+  "version": "8.0.0",
+  "options": {
+    "inputs": [
+      "../../../../Desktop/DhlSOAP.wsdl"
+    ],
+    "outputFile": "Reference.cs",
+    "targetFramework": "net9.0",
+    "typeReuseMode": "All"
+  }
+}

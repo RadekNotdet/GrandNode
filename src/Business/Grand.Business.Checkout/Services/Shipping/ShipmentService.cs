@@ -4,6 +4,7 @@ using Grand.Domain;
 using Grand.Domain.Shipping;
 using Grand.Infrastructure.Extensions;
 using MediatR;
+using Shipping.DHL.CQRS.Commands.CreateDelivery;
 
 namespace Grand.Business.Checkout.Services.Shipping;
 
@@ -129,6 +130,14 @@ public class ShipmentService : IShipmentService
     {
         ArgumentNullException.ThrowIfNull(shipment);
         var shipmentExists = _shipmentRepository.Table.FirstOrDefault();
+
+        if(shipment.HasExternalDeliveryShipment)
+        {
+            // await _mediator.Send(new CreateDeliveryCommand { });
+            //call external delivery service: create shipment ( returns ExternalDeliveryShipmentId )
+            //add ExternalDeliveryShipmentId to shipment
+            //_externalDeliveryRepository.InsertAsync(ExternalDeliveryShipmentId, bookCourierId?) //InsertAsync(dhl-id, ...);
+        }
         shipment.ShipmentNumber = shipmentExists != null ? _shipmentRepository.Table.Max(x => x.ShipmentNumber) + 1 : 1;
         await _shipmentRepository.InsertAsync(shipment);
 

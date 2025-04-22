@@ -33,5 +33,15 @@ public enum ShippingStatus
     /// <summary>
     ///     Delivered
     /// </summary>
-    Delivered = 40
+    Delivered = 40,
+
+    /// <summary>
+    ///     Awaits for courier pick up
+    /// </summary>
+    AwaitingCourier = 41,
+
+    /// <summary>
+    ///     Shipment returned/in return.
+    /// </summary>
+    Returned = 42
 }

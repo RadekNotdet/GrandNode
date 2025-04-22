@@ -16,6 +16,7 @@ using Grand.Web.Common.Filters;
 using Grand.Web.Common.Security.Authorization;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Shipping.DHL.CQRS.Commands.CreateDelivery;
 
 namespace Grand.Web.Admin.Controllers;
 
@@ -165,6 +166,8 @@ public class ShipmentController : BaseAdminController
             //No order found with the specified id
             return RedirectToAction("List");
 
+        
+
         if (await _groupService.IsStaff(_contextAccessor.WorkContext.CurrentCustomer) &&
             order.StoreId != _contextAccessor.WorkContext.CurrentCustomer.StaffStoreId)
             return RedirectToAction("List");
@@ -188,7 +191,10 @@ public class ShipmentController : BaseAdminController
         if (shipment.ShipmentItems.Count > 0)
         {
             shipment.TotalWeight = sh.totalWeight;
+          
             await _shipmentService.InsertShipment(shipment);
+
+
 
             //add a note
             await _orderService.InsertOrderNote(new OrderNote {
@@ -574,6 +580,7 @@ public class ShipmentController : BaseAdminController
         foreach (var shipment in shipments_access)
             try
             {
+                var order = await _orderService.GetOrderById(shipment.OrderId);
                 await _mediator.Send(new ShipCommand { Shipment = shipment, NotifyCustomer = true });
             }
             catch
@@ -608,7 +615,6 @@ public class ShipmentController : BaseAdminController
 
         return Json(new { Result = true });
     }
-
     #region Shipment notes
 
     [PermissionAuthorizeAction(PermissionActionName.Preview)]
