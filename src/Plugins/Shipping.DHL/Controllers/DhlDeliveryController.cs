@@ -35,7 +35,8 @@ namespace Shipping.DHL.Controllers
         private readonly IOrderService _orderService;
         private readonly IRepository<DhlShipmentsDelivery> _dhlDeliveryRepository;
 
-        public DhlDeliveryController(IMediator mediator, IContextAccessor contextAccessor, IGroupService groupService, IShipmentService shipmentService, IOrderService orderService, IRepository<DhlShipmentsDelivery> dhlDeliveryRepository)
+        public DhlDeliveryController(IMediator mediator, IContextAccessor
+            contextAccessor, IGroupService groupService, IShipmentService shipmentService, IOrderService orderService, IRepository<DhlShipmentsDelivery> dhlDeliveryRepository)
         {
             _mediator = mediator;
             _contextAccessor = contextAccessor;
@@ -56,6 +57,7 @@ namespace Shipping.DHL.Controllers
             if (await _groupService.IsStaff(_contextAccessor.WorkContext.CurrentCustomer))
                 storeId = _contextAccessor.WorkContext.CurrentCustomer.StaffStoreId;
 
+            //??? 
             shipments_access = shipments.Where(x => x.StoreId == storeId || string.IsNullOrEmpty(storeId)).ToList();
 
             foreach (var shipment in shipments_access)
@@ -76,7 +78,7 @@ namespace Shipping.DHL.Controllers
                             ShipmentsIdList = new[] { shipment.ExternalDeliveryShipmentId }
                         });
 
-
+                        if(string.IsNullOrEmpty(bookCourierResult))
                         order.ShippingStatusId = ShippingStatus.AwaitingCourier;
                         await _orderService.UpdateOrder(order);
 
@@ -85,18 +87,15 @@ namespace Shipping.DHL.Controllers
                         string dhlInternalShipmentId = shipment.ExternalDeliveryShipmentId;
 
                         //get externaldeliveryprovider shipmentid (from provider's db set)
-                        var dhlDeliveryShipment = await _dhlDeliveryRepository.Table.Where(
-                            column =>column.DhlShipmentId.ToLower().Contains(shipment.ExternalDeliveryShipmentId))
+                        var dhlDeliveryEntity = await _dhlDeliveryRepository.Table
+                            .Where(column =>column.DhlShipmentId.ToUpper().Contains(shipment.ExternalDeliveryShipmentId.ToUpper()))
                             .FirstAsync();
-
-                        //update externalprovider with bookCourierId 
-                        dhlDeliveryShipment.PickupOrderId = bookCourierOrderId;
-
-                        await _dhlDeliveryRepository.UpdateAsync(dhlDeliveryShipment);
+                        dhlDeliveryEntity.PickupOrderId = bookCourierOrderId;
+                        await _dhlDeliveryRepository.UpdateAsync(dhlDeliveryEntity);
                     }
                     catch (Exception ex)
                     {
-                        return StatusCode(500, $"DHL API Error: {ex.Message}");
+                        return StatusCode(500, $"{ex.Message}");
                     }
                 } 
             }

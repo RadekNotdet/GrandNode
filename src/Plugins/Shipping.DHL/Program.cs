@@ -1,4 +1,6 @@
+using FluentValidation;
 using Shipping.DHL.Common;
+using Shipping.DHL.CQRS.Commands.BookCourier;
 using System.ServiceModel;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,8 @@ builder.Services.AddScoped<DHL24WebapiPortClient>(_ =>
 
     return new DHL24WebapiPortClient(binding, endpoint);
 });
+
+builder.Services.AddValidatorsFromAssembly(typeof(BookCourierCommandValidator).Assembly);
 
 builder.Services.AddControllers();
 

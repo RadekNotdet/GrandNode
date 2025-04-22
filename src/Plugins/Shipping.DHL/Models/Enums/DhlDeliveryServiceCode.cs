@@ -1,4 +1,4 @@
-﻿namespace Shipping.DHL.Enums
+﻿namespace Shipping.DHL.Models.Enums
 {
     public enum DhlDeliveryServiceCode
     {
@@ -11,6 +11,6 @@
         EK,
         PI,
         CP,
-        CM 
+        CM
     }
 }

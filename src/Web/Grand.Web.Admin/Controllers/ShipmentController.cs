@@ -16,6 +16,7 @@ using Grand.Web.Common.Filters;
 using Grand.Web.Common.Security.Authorization;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Shipping.DHL.CQRS.Commands.CreateDelivery;
 
 namespace Grand.Web.Admin.Controllers;
 
@@ -190,9 +191,7 @@ public class ShipmentController : BaseAdminController
         if (shipment.ShipmentItems.Count > 0)
         {
             shipment.TotalWeight = sh.totalWeight;
-
-            //IF DHL - CREATESHIPMENT + ASSIGN EXTERNALDELIVERYID TO SHIPMENT
-
+          
             await _shipmentService.InsertShipment(shipment);
 
 

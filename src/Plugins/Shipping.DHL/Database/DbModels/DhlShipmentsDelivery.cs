@@ -8,6 +8,7 @@ namespace Shipping.DHL.Database.DbModels
         public string PickupOrderId  { get; set; }
 
         // public string ExternalProviderName { get; set; }
+        public string Status { get; set; }
 
     }
 }

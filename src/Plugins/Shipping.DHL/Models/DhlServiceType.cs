@@ -1,4 +1,4 @@
-﻿using Shipping.DHL.Enums;
+﻿using Shipping.DHL.Models.Enums;
 
 namespace Shipping.DHL.Models
 {
